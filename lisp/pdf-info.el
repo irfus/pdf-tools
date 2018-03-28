@@ -1593,7 +1593,15 @@ Return the data of the corresponding PNG image."
     'renderpage
     (pdf-info--normalize-file-or-buffer file-or-buffer)
     page
-    width
+    (* width
+       ;; XXX This does not give optimal results when you have both
+       ;; Retina and non-Retina displays connected.  For true
+       ;; high-resolution support, one should use either TIFF, "@2x"
+       ;; convention, or resolution-independent formats such as PDF.
+       (or (and (memq (pdf-view-image-type) '(imagemagick image-io))
+               (fboundp 'frame-monitor-attributes)
+               (cdr (assq 'backing-scale-factor (frame-monitor-attributes))))
+          1))
     (let (transformed)
       (while (cdr commands)
         (let ((kw (pop commands))

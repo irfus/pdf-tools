@@ -862,7 +862,7 @@ See also `pdf-view-set-slice-from-bounding-box'."
   "Return the image type that should be used.
 
 The return value is either `imagemagick' (if available and wanted
-or if png is not available) or `png'.
+or if png is not available), image-io (on the Mac port), or png.
 
 Signal an error, if neither `imagemagick' nor `png' is available.
 
@@ -870,6 +870,8 @@ See also `pdf-view-use-imagemagick'."
   (cond ((and pdf-view-use-imagemagick
               (fboundp 'imagemagick-types))
          'imagemagick)
+	((image-type-available-p 'image-io)
+	 'image-io)
         ((image-type-available-p 'png)
          'png)
         ((fboundp 'imagemagick-types)
@@ -879,8 +881,8 @@ See also `pdf-view-use-imagemagick'."
 
 (defun pdf-view-use-scaling-p ()
   "Return t if scaling should be used."
-  (and (eq 'imagemagick
-           (pdf-view-image-type))
+  (and (memq (pdf-view-image-type)
+	     '(imagemagick image-io))
        pdf-view-use-scaling))
 
 (defmacro pdf-view-create-image (data &rest props)
@@ -1324,7 +1326,7 @@ Stores the region in `pdf-view-active-region'."
 
 EVENT is the mouse event.
 
-This is more useful for commands like
+This is moreuseful for commands like
 `pdf-view-extract-region-image'."
   (interactive "@e")
   (pdf-view-mouse-set-region event nil t))
@@ -1347,7 +1349,8 @@ This is more useful for commands like
               `(,(car colors) ,(cdr colors) 0.35 ,@region))
            (pdf-info-renderpage-text-regions
             page width nil nil
-            `(,(car colors) ,(cdr colors) ,@region)))))))
+	    `(,(car colors) ,(cdr colors) ,@region)))
+       :width width))))
 
 (defun pdf-view-kill-ring-save ()
   "Copy the region to the `kill-ring'."
